@@ -6,22 +6,130 @@ import re
 from models import Order, Payment, Feedback, Product, User
 from feedback import analyze_feedback_text
 
+def tool_search_products(db: Session, query: str) -> List[Dict[str, Any]]:
+    """
+    Searches the product catalog for items matching keywords in the query.
+    """
+    stop_words = {"create", "new", "order", "for", "each", "brand", "only", "want", "need", "buy", "a", "an", "the", "please", "list", "show", "items", "available"}
+    terms = [t.strip().lower() for t in re.findall(r'\b[a-zA-Z0-9]+\b', query) if t.strip().lower() not in stop_words and len(t.strip()) > 1]
+
+    all_products = db.query(Product).all()
+    matches = []
+
+    for p in all_products:
+        p_name = p.name.lower()
+        p_desc = (p.description or "").lower()
+        p_cat = p.category.lower()
+
+        score = 0
+        for term in terms:
+            if term in p_name:
+                score += 4
+            elif term in p_cat:
+                score += 2
+            elif term in p_desc:
+                score += 1
+
+        if score > 0:
+            matches.append((score, p))
+
+    matches.sort(key=lambda x: x[0], reverse=True)
+
+    return [
+        {
+            "id": p.id,
+            "name": p.name,
+            "price": p.price,
+            "category": p.category,
+            "description": p.description,
+            "image": p.image
+        } for _, p in matches
+    ]
+
+
+def tool_list_sorted_products(db: Session, query: str, sort_by: str = "price_asc") -> List[Dict[str, Any]]:
+    """
+    Lists catalog items matching query keywords and sorts them by price (price_asc / price_desc).
+    """
+    matches = tool_search_products(db, query)
+    if not matches:
+        all_prods = db.query(Product).all()
+        matches = [
+            {
+                "id": p.id,
+                "name": p.name,
+                "price": p.price,
+                "category": p.category,
+                "description": p.description,
+                "image": p.image
+            } for p in all_prods
+        ]
+
+    if sort_by == "price_asc":
+        matches.sort(key=lambda x: x["price"])
+    elif sort_by == "price_desc":
+        matches.sort(key=lambda x: x["price"], reverse=True)
+
+    return matches
+
+
+def tool_get_filtered_orders(db: Session, user_id: int, filter_term: str) -> List[Dict[str, Any]]:
+    """
+    Retrieves orders placed by user matching a specific product filter or category (e.g. 'icecream', 'icecreams', 'keyboard').
+    """
+    orders = db.query(Order).filter(Order.user_id == user_id).order_by(Order.id.desc()).all()
+
+    clean_filter = filter_term.lower()
+    # Normalize plural & word variants (e.g. icecreams, ice-creams -> ice cream)
+    clean_filter = clean_filter.replace("icecreams", "ice cream").replace("icecream", "ice cream").replace("ice-cream", "ice cream")
+
+    ignore_words = {
+        "list", "last", "past", "previous", "recent", "having", "with", "containing",
+        "items", "item", "ordered", "orders", "order", "my", "show", "purchased",
+        "history", "for", "of", "in"
+    }
+
+    clean_words = [w for w in re.findall(r'\b[a-zA-Z0-9]+\b', clean_filter) if w not in ignore_words and len(w) > 1]
+
+    filtered = []
+    for o in orders:
+        o_prod = o.product.lower()
+        if not clean_words:
+            filtered.append({
+                "id": o.id,
+                "product": o.product,
+                "quantity": o.quantity,
+                "amount": o.amount,
+                "status": o.status,
+                "date": o.date.strftime("%Y-%m-%d %H:%M")
+            })
+        elif any(w in o_prod for w in clean_words) or ("ice" in clean_filter and "cream" in o_prod):
+            filtered.append({
+                "id": o.id,
+                "product": o.product,
+                "quantity": o.quantity,
+                "amount": o.amount,
+                "status": o.status,
+                "date": o.date.strftime("%Y-%m-%d %H:%M")
+            })
+
+    return filtered
+
+
 def tool_create_order(db: Session, user_id: int, product: str, quantity: int = 1) -> Dict[str, Any]:
     """
     Creates a new order for the user.
     """
-    # Look up product in catalog to determine unit price
     matched_product = db.query(Product).filter(Product.name.ilike(f"%{product}%")).first()
     if matched_product:
         product_name = matched_product.name
         unit_price = matched_product.price
     else:
         product_name = product.strip().title()
-        unit_price = 1299.0  # default estimated price for custom item
+        unit_price = 1299.0
 
     total_amount = unit_price * max(1, quantity)
 
-    # Generate next sequential order ID
     max_id = db.query(Order.id).order_by(Order.id.desc()).first()
     new_order_id = (max_id[0] + 1) if max_id and max_id[0] else 104
 
@@ -58,7 +166,6 @@ def tool_pay_order(db: Session, user_id: int, order_id: Optional[int] = None) ->
     else:
         order = query.filter(Order.status == "Pending").order_by(Order.id.desc()).first()
         if not order:
-            # Fallback to latest order regardless of status
             order = query.order_by(Order.id.desc()).first()
 
     if not order:
@@ -152,16 +259,13 @@ def tool_recommend_products(db: Session, user_id: int, query_hint: Optional[str]
 
     all_products = db.query(Product).all()
 
-    # Filter or rank recommendations
     recommendations = []
     if query_hint and ("bag" in query_hint.lower() or "laptop bag" in query_hint.lower()):
-        # Specific query for laptop bag
         recs = [p for p in all_products if "bag" in p.name.lower()]
         if not recs:
             recs = [p for p in all_products if p.category == "Accessories"]
         recommendations = recs
     else:
-        # Complementary items recommendation
         if any("keyboard" in p or "laptop" in p for p in ordered_product_names):
             recs = [p for p in all_products if p.name in ["Laptop Bag", "USB-C Hub", "Wireless Headphones", "Desk Mat"]]
         else:

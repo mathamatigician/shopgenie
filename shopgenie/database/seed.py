@@ -34,7 +34,13 @@ def seed_db():
             Product(id=4, name="Laptop Bag", price=1299.0, category="Accessories", description="Water-resistant stylish laptop backpack with padded compartment.", image="🎒"),
             Product(id=5, name="Wireless Headphones", price=2999.0, category="Audio", description="Noise-cancelling over-ear wireless headphones.", image="🎧"),
             Product(id=6, name="USB-C Hub", price=1499.0, category="Electronics", description="7-in-1 multi-port adapter with 4K HDMI and USB 3.0.", image="🔌"),
-            Product(id=7, name="Desk Mat", price=499.0, category="Accessories", description="Large non-slip waterproof desk pad.", image="📐")
+            Product(id=7, name="Desk Mat", price=499.0, category="Accessories", description="Large non-slip waterproof desk pad.", image="📐"),
+            Product(id=8, name="Amul Vanilla Ice Cream 100ml", price=50.0, category="Dairy & Frozen", description="Classic 100ml Amul Vanilla Ice Cream cup.", image="🍦"),
+            Product(id=9, name="Amul Chocolate Ice Cream 100ml", price=60.0, category="Dairy & Frozen", description="Rich & creamy 100ml Amul Chocolate Ice Cream cup.", image="🍨"),
+            Product(id=10, name="Amul Butterscotch Ice Cream 100ml", price=55.0, category="Dairy & Frozen", description="Crunchy 100ml Amul Butterscotch Ice Cream cup.", image="🍦"),
+            Product(id=11, name="Amul Mango Duet Ice Cream 100ml", price=45.0, category="Dairy & Frozen", description="Refreshing 100ml Amul Mango Duet ice cream cup.", image="🥭"),
+            Product(id=12, name="Amul Alphonso Mango Ice Cream 100ml", price=65.0, category="Dairy & Frozen", description="Premium Alphonso Mango pulp 100ml cup.", image="🥭"),
+            Product(id=13, name="Amul Mango Kulfi 100ml", price=40.0, category="Dairy & Frozen", description="Traditional Amul Mango Kulfi 100ml cup.", image="🥭")
         ]
         db.add_all(products)
         db.commit()
@@ -45,7 +51,8 @@ def seed_db():
             Order(id=101, user_id=1, product="Keyboard", quantity=1, amount=1999.0, status="Delivered", date=datetime(2026, 7, 10, 10, 30)),
             Order(id=102, user_id=1, product="Mouse", quantity=1, amount=899.0, status="Pending", date=datetime(2026, 7, 15, 14, 20)),
             Order(id=103, user_id=1, product="Laptop Stand", quantity=1, amount=1599.0, status="Paid", date=datetime(2026, 7, 17, 16, 45)),
-            Order(id=104, user_id=2, product="Wireless Headphones", quantity=1, amount=2999.0, status="Delivered", date=datetime(2026, 7, 12, 11, 00)),
+            Order(id=104, user_id=1, product="Amul Mango Duet Ice Cream 100ml", quantity=2, amount=90.0, status="Delivered", date=datetime(2026, 7, 18, 8, 15)),
+            Order(id=105, user_id=2, product="Wireless Headphones", quantity=1, amount=2999.0, status="Delivered", date=datetime(2026, 7, 12, 11, 00)),
         ]
         db.add_all(orders)
         db.commit()
@@ -54,7 +61,8 @@ def seed_db():
         # Seed Payments
         payments = [
             Payment(id="P101", order_id=101, method="Visa", status="Paid", amount=1999.0, date=datetime(2026, 7, 10, 10, 32)),
-            Payment(id="P103", order_id=103, method="Mastercard", status="Paid", amount=1599.0, date=datetime(2026, 7, 17, 16, 46))
+            Payment(id="P103", order_id=103, method="Mastercard", status="Paid", amount=1599.0, date=datetime(2026, 7, 17, 16, 46)),
+            Payment(id="P104", order_id=104, method="Visa", status="Paid", amount=90.0, date=datetime(2026, 7, 18, 8, 16))
         ]
         db.add_all(payments)
         db.commit()
