@@ -19,9 +19,12 @@ class Product(Base):
     __tablename__ = "products"
 
     id = Column(Integer, primary_key=True, index=True)
+    sku = Column(String, nullable=True, index=True)
     name = Column(String, nullable=False, index=True)
     price = Column(Float, nullable=False)
     category = Column(String, nullable=False)
+    brand = Column(String, nullable=True, index=True)
+    stock = Column(Integer, default=50)
     description = Column(String, nullable=True)
     image = Column(String, nullable=True)
 

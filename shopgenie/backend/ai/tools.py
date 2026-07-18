@@ -8,7 +8,7 @@ from feedback import analyze_feedback_text
 
 def tool_search_products(db: Session, query: str) -> List[Dict[str, Any]]:
     """
-    Searches the product catalog for items matching keywords in the query.
+    Searches the product catalog for items matching keywords in the query across name, brand, SKU, and category.
     """
     stop_words = {"create", "new", "order", "for", "each", "brand", "only", "want", "need", "buy", "a", "an", "the", "please", "list", "show", "items", "available"}
     terms = [t.strip().lower() for t in re.findall(r'\b[a-zA-Z0-9]+\b', query) if t.strip().lower() not in stop_words and len(t.strip()) > 1]
@@ -20,13 +20,19 @@ def tool_search_products(db: Session, query: str) -> List[Dict[str, Any]]:
         p_name = p.name.lower()
         p_desc = (p.description or "").lower()
         p_cat = p.category.lower()
+        p_brand = (p.brand or "").lower()
+        p_sku = (p.sku or "").lower()
 
         score = 0
         for term in terms:
             if term in p_name:
+                score += 5
+            elif term in p_brand:
                 score += 4
             elif term in p_cat:
-                score += 2
+                score += 3
+            elif term in p_sku:
+                score += 3
             elif term in p_desc:
                 score += 1
 
@@ -38,9 +44,12 @@ def tool_search_products(db: Session, query: str) -> List[Dict[str, Any]]:
     return [
         {
             "id": p.id,
+            "sku": p.sku,
             "name": p.name,
             "price": p.price,
             "category": p.category,
+            "brand": p.brand,
+            "stock": p.stock,
             "description": p.description,
             "image": p.image
         } for _, p in matches
@@ -57,9 +66,12 @@ def tool_list_sorted_products(db: Session, query: str, sort_by: str = "price_asc
         matches = [
             {
                 "id": p.id,
+                "sku": p.sku,
                 "name": p.name,
                 "price": p.price,
                 "category": p.category,
+                "brand": p.brand,
+                "stock": p.stock,
                 "description": p.description,
                 "image": p.image
             } for p in all_prods
@@ -80,7 +92,6 @@ def tool_get_filtered_orders(db: Session, user_id: int, filter_term: str) -> Lis
     orders = db.query(Order).filter(Order.user_id == user_id).order_by(Order.id.desc()).all()
 
     clean_filter = filter_term.lower()
-    # Normalize plural & word variants (e.g. icecreams, ice-creams -> ice cream)
     clean_filter = clean_filter.replace("icecreams", "ice cream").replace("icecream", "ice cream").replace("ice-cream", "ice cream")
 
     ignore_words = {
@@ -124,6 +135,8 @@ def tool_create_order(db: Session, user_id: int, product: str, quantity: int = 1
     if matched_product:
         product_name = matched_product.name
         unit_price = matched_product.price
+        if matched_product.stock >= quantity:
+            matched_product.stock -= quantity
     else:
         product_name = product.strip().title()
         unit_price = 1299.0
@@ -267,7 +280,7 @@ def tool_recommend_products(db: Session, user_id: int, query_hint: Optional[str]
         recommendations = recs
     else:
         if any("keyboard" in p or "laptop" in p for p in ordered_product_names):
-            recs = [p for p in all_products if p.name in ["Laptop Bag", "USB-C Hub", "Wireless Headphones", "Desk Mat"]]
+            recs = [p for p in all_products if p.name in ["Waterproof Laptop Backpack Bag", "7-in-1 Multi-port USB-C Hub", "Wireless Noise Cancelling Headphones", "Extended Waterproof Desk Mat"]]
         else:
             recs = all_products[:4]
         recommendations = recs
@@ -275,9 +288,12 @@ def tool_recommend_products(db: Session, user_id: int, query_hint: Optional[str]
     formatted_recs = [
         {
             "id": p.id,
+            "sku": p.sku,
             "name": p.name,
             "price": p.price,
             "category": p.category,
+            "brand": p.brand,
+            "stock": p.stock,
             "description": p.description,
             "image": p.image
         } for p in recommendations

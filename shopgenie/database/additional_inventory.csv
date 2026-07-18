@@ -1,0 +1,20 @@
+SKU,Category,ItemName,QuantityInStock,UnitPriceINR,Brand
+SKU031,Ice Cream,Amul Vanilla Ice Cream 500g Pack,15,220,Amul
+SKU032,Ice Cream,Amul Chocolate Ice Cream 500g Pack,12,250,Amul
+SKU033,Ice Cream,Amul Alphonso Mango Ice Cream 100ml,40,65,Amul
+SKU034,Ice Cream,Amul Mango Duet Ice Cream 100ml,50,45,Amul
+SKU035,Ice Cream,Amul Mango Kulfi 100ml,60,40,Amul
+SKU036,Chips,Balaji Potato Chips 20 Rs Pack,45,20,Balaji
+SKU037,Chips,Balaji Simply Salted Wafers 50g,30,20,Balaji
+SKU038,Dairy,Amul Taaza Toned Milk 1L,100,74,Amul
+SKU039,Dairy,Amul Pasteurised Butter 500g,40,275,Amul
+SKU040,Dairy,Amul Malai Paneer 200g,25,95,Amul
+SKU041,Beverages,Tata Tea Gold 250g,60,160,Tata
+SKU042,Beverages,Nescafe Classic Instant Coffee 50g,35,180,Nescafe
+SKU043,Electronics,Mechanical RGB Keyboard,15,1999,Logitech
+SKU044,Electronics,Precision Wireless Optical Mouse,25,899,Logitech
+SKU045,Accessories,Adjustable Ergonomic Laptop Stand,20,1599,Portronics
+SKU046,Accessories,Waterproof Laptop Backpack Bag,18,1299,Wildcraft
+SKU047,Audio,Wireless Noise Cancelling Headphones,10,2999,Boat
+SKU048,Electronics,7-in-1 Multi-port USB-C Hub,30,1499,Anker
+SKU049,Accessories,Extended Waterproof Desk Mat,40,499,Cosmic Byte

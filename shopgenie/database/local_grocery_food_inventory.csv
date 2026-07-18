@@ -1,0 +1,31 @@
+SKU,Category,ItemName,QuantityInStock,UnitPriceINR,Brand
+SKU001,Chips,Lay's Classic,50,10,Lay's
+SKU002,Chips,Lay's Magic Masala,80,20,Lay's
+SKU003,Chips,Kurkure Masala Munch,120,20,Kurkure
+SKU004,Chips,Bingo Mad Angles,60,20,Bingo
+SKU005,Namkeen,Haldiram Aloo Bhujia,40,35,Haldiram
+SKU006,Namkeen,Bikaji Bhujia,55,30,Bikaji
+SKU007,Namkeen,Balaji Ratlami Sev,25,45,Balaji
+SKU008,Soft Drink,Coca-Cola 250ml,90,20,Coca-Cola
+SKU009,Soft Drink,Pepsi 250ml,85,20,Pepsi
+SKU010,Soft Drink,Sprite 750ml,35,40,Sprite
+SKU011,Soft Drink,Thumbs Up 750ml,45,40,Thums Up
+SKU012,Soft Drink,Fanta Orange,30,40,Fanta
+SKU013,Ice Cream,Amul Vanilla Cup,40,30,Amul
+SKU014,Ice Cream,Kwality Walls Cornetto,28,60,Kwality Wall's
+SKU015,Ice Cream,Vadilal Chocobar,32,35,Vadilal
+SKU016,Toffee,Parle Melody,500,1,Parle
+SKU017,Toffee,Alpenliebe,450,1,Perfetti
+SKU018,Toffee,Pulse Kachcha Aam,300,2,DS Group
+SKU019,Toffee,Mentos Mint,220,2,Perfetti
+SKU020,Chocolate,Cadbury Dairy Milk 24g,75,20,Cadbury
+SKU021,Chocolate,KitKat 2 Finger,65,20,Nestlé
+SKU022,Biscuits,Parle-G 80g,150,10,Parle
+SKU023,Biscuits,Good Day Cashew,70,35,Britannia
+SKU024,Biscuits,Oreo Vanilla,55,30,Oreo
+SKU025,Noodles,Maggi 2-Minute,110,15,Maggi
+SKU026,Noodles,Yippee Magic Masala,95,15,Sunfeast
+SKU027,Juice,Real Mixed Fruit 1L,22,120,Real
+SKU028,Juice,Tropicana Orange 1L,20,125,Tropicana
+SKU029,Water,Bisleri 1L,100,20,Bisleri
+SKU030,Energy Drink,Red Bull 250ml,18,125,Red Bull
