@@ -1,27 +1,28 @@
-# Technical Documentation - ShopGenie 🧞‍♂️
+# Technical Documentation - ShopGenie 🧞‍♂️ (Version 1.2)
 
 ## 1. Technology Stack
 
 ### Backend Stack
 - **Framework**: FastAPI (Python 3.12)
-- **ASGI Server**: Uvicorn
-- **Database**: SQLite (SQLAlchemy ORM)
+- **ASGI Server**: Uvicorn (StatReload enabled)
+- **Database**: SQLite (`shopgenie.db`) with SQLAlchemy ORM
+- **Seeding Pipeline**: Dynamic CSV parser (`inventory.csv` + `additional_inventory.csv`)
 - **Authentication**: PyJWT (HS256 signature token validation)
-- **AI Engine**: ShopGenie Agent (Google Gemini API / NLP Intent Engine)
+- **AI Engine**: ShopGenie Agent (Google Gemini API / Hybrid Rule & Intent Engine)
 - **Data Validation**: Pydantic v2
 
 ### Frontend Stack
 - **Framework**: Vue 3 (Composition API `<script setup>`)
 - **Build Tool**: Vite 6
 - **Routing**: Vue Router 4 (with route auth guards)
-- **State Management**: Reactive Auth Store
+- **State Management**: Reactive Auth Store & Cart State
 - **HTTP Client**: Axios with request authorization interceptors
-- **Styling**: Custom Glassmorphism CSS Design System
+- **Styling**: Custom Glassmorphic CSS Design System
 - **Accessibility**: Web Speech API (SpeechRecognition & SpeechSynthesis)
 
 ---
 
-## 2. System Architecture
+## 2. System Architecture & Component Interaction
 
 ShopGenie operates as a decoupled client-server architecture connected over REST and JSON payload APIs.
 
@@ -30,17 +31,17 @@ Client (Vue 3 SPA)  <--->  REST API (FastAPI)  <--->  ShopGenie Agent  <--->  SQ
 ```
 
 ### Data Flow for Conversational Shopping:
-1. User types or speaks a phrase (e.g. *"Pay for my latest order"*).
-2. Frontend sends payload `POST /chat` with message and JWT auth token.
+1. User types or speaks a phrase (e.g. *"Create an order for 1. Amul 500g ice-cream pack 1 Qty 2. Balaji Potato Chips 20 Rs pack 5 Qty."*).
+2. Frontend sends payload `POST /chat` with message and JWT auth token header.
 3. Backend extracts current user context from JWT payload.
-4. `ShopGenieAgent` parses intent and invokes the matching tool function in `ai/tools.py`.
-5. The tool function updates SQLite database via SQLAlchemy session.
+4. `ShopGenieAgent` parses multi-item requests, validates inventory per item against SQLite DB, builds cart draft, and resolves out-of-stock items with alternate suggestions.
+5. The tool function updates SQLite database via SQLAlchemy session upon confirmation.
 6. `ShopGenieAgent` returns structured response containing `reply`, `tool_called`, `tool_output`, and `data`.
-7. Frontend renders response bubble, executes voice synthesis if enabled, and updates orders state.
+7. Frontend renders response bubble, executes voice synthesis if enabled, and updates orders/cart UI state.
 
 ---
 
-## 3. Database Schema & Models
+## 3. Database Schema & ORM Models
 
 ```python
 # User Model
@@ -49,6 +50,18 @@ class User(Base):
     name: str
     email: str (Unique)
     password: str
+
+# Product Catalog Model (Populated from CSVs)
+class Product(Base):
+    id: int (PK)
+    sku: str (SKU001, SKU031...)
+    name: str
+    price: float
+    category: str
+    brand: str
+    stock: int
+    description: str
+    image: str
 
 # Order Model
 class Order(Base):
@@ -80,20 +93,39 @@ class Feedback(Base):
     urgency: str ("Low", "Medium", "High")
     keywords: str
     created_at: datetime
-
-# Product Catalog Model
-class Product(Base):
-    id: int (PK)
-    name: str
-    price: float
-    category: str
-    description: str
-    image: str
 ```
 
 ---
 
-## 4. API Endpoints Specification
+## 4. Seeding Pipeline & CSV Schema
+
+Database seeding is powered by [seed.py](file:///mnt/c/Users/Harshit/Downloads/Hackathons/Amadeus_final/shopgenie/database/seed.py), which reads from two CSV files:
+- [inventory.csv](file:///mnt/c/Users/Harshit/Downloads/Hackathons/Amadeus_final/shopgenie/database/inventory.csv): 30 base grocery and snack items (`SKU001` - `SKU030`)
+- [additional_inventory.csv](file:///mnt/c/Users/Harshit/Downloads/Hackathons/Amadeus_final/shopgenie/database/additional_inventory.csv): 19 additional ice creams, dairy, snacks, and electronics items (`SKU031` - `SKU049`)
+
+### CSV Field Structure:
+`SKU, Category, ItemName, QuantityInStock, UnitPriceINR, Brand`
+
+---
+
+## 5. AI Tool Calling Engine Specifications
+
+| Tool Function | Intent / Trigger | Description |
+|---|---|---|
+| `tool_create_order` | `"Order X"`, `"Confirm"` | Creates new order in DB and decrements item stock. |
+| `tool_pay_order` | `"Pay for order"` | Processes payment via Visa/UPI & updates status to Paid. |
+| `tool_submit_feedback` | `"Packaging was poor..."` | Extracts sentiment, category, urgency, & keywords. |
+| `tool_recommend_products` | `"Recommend bags"` | Generates recommendations based on purchase history. |
+| `tool_search_products` | `"Search X"` | Searches items across SKU, Brand, Name, & Category. |
+| `tool_list_sorted_products` | `"List X sorted by price"` | Returns items sorted by price (`price_asc` / `price_desc`). |
+| `tool_get_filtered_orders` | `"List past orders having X"` | Filters user's order history by product type/category. |
+| `view_cart` | `"show cart option"` | Displays active draft cart items, subtotals, and total. |
+| `update_cart_quantity` | `"Update quantity of X to N"` | Modifies quantity of item in active draft cart. |
+| `clear_cart` | `"clear cart"` | Clears current user's active draft cart. |
+
+---
+
+## 6. API Endpoints Specification
 
 ### Auth Endpoint
 `POST /login`
@@ -103,10 +135,10 @@ class Product(Base):
 ### Orders Endpoints
 `GET /orders`
 - **Headers**: `Authorization: Bearer <token>`
-- **Response**: Array of order objects.
+- **Response**: Array of user order objects.
 
 `POST /orders`
-- **Request Body**: `{"product": "Keyboard", "quantity": 1, "amount": 1999.0}`
+- **Request Body**: `{"product": "Amul Vanilla Ice Cream 100ml", "quantity": 2, "amount": 100.0}`
 - **Response**: Order object.
 
 ### Payment Endpoints
@@ -121,13 +153,13 @@ class Product(Base):
 
 ### Chat Endpoint
 `POST /chat`
-- **Request Body**: `{"message": "I want another keyboard"}`
+- **Request Body**: `{"message": "show cart option"}`
 - **Response**:
 ```json
 {
-  "reply": "I've placed a new order for 1x Keyboard (Order #105) amounting to ₹1999.00.",
-  "tool_called": "create_order",
-  "tool_output": {"order_id": 105, "status": "Pending", "amount": 1999.0},
-  "data": {"order": {...}}
+  "reply": "🛒 Your Current Shopping Cart:\n\n• Amul Vanilla Ice Cream 100ml 🍦 — Qty: 2 | Price: ₹50.00 each | Subtotal: ₹100.00\n\n💰 Total Cart Amount: ₹100.00",
+  "tool_called": "view_cart",
+  "tool_output": {"cart": [...], "total_amount": 100.0},
+  "data": {"cart": [...]}
 }
 ```
