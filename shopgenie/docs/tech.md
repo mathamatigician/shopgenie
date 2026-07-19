@@ -108,7 +108,9 @@ Database seeding is powered by [seed.py](file:///mnt/c/Users/Harshit/Downloads/H
 
 ---
 
-## 5. AI Tool Calling Engine Specifications
+## 5. AI Tool Calling Engine & User Query Translation Specifications
+
+> For detailed specifications on how user queries are translated, parsed, and routed for all use cases, see [query_translation.md](file:///mnt/c/Users/Harshit/Downloads/Hackathons/Amadeus_final/shopgenie/docs/query_translation.md).
 
 | Tool Function | Intent / Trigger | Description |
 |---|---|---|

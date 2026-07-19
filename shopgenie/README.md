@@ -103,7 +103,12 @@ shopgenie/
 │   │   └── services/   # Axios API Service Layer
 │   ├── package.json
 │   └── vite.config.js
+├── docs/
+│   ├── query_translation.md  # Detailed User Query Translation Specifications
+│   ├── tech.md               # Technical Architecture Documentation
+│   ├── PRD.md                # Product Requirements Document
+│   └── usecases.md           # Business & Demo Use Cases
 ├── database/
-│   └── seed.py         # DB Seeder Script
+│   └── seed.py               # DB Seeder Script
 └── README.md
 ```
