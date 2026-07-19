@@ -380,27 +380,36 @@ class ShopGenieAgent:
 
     def _parse_items_from_message(self, text: str) -> List[Dict[str, Any]]:
         numbered_matches = re.findall(r'(?:\d+[\.\)]\s*)([^1-9\.\)]+)', text)
-        items = []
-
         if len(numbered_matches) >= 2:
-            for raw_item in numbered_matches:
-                clean_text = raw_item.strip()
-                qty = 1
-                qty_match = re.search(r'(\d+)\s*(?:qty|quantity|pcs|pieces)\b', clean_text, flags=re.IGNORECASE)
-                if not qty_match:
-                    qty_match = re.search(r'\b(?:qty|quantity)\s*(\d+)\b', clean_text, flags=re.IGNORECASE)
-                if qty_match:
-                    qty = int(qty_match.group(1))
+            segments = numbered_matches
+        else:
+            cleaned_text = re.sub(r'^(?:i\s+want\s+to\s+)?(?:order|buy|purchase|add|need|get)\s+', '', text, flags=re.IGNORECASE).strip()
+            raw_splits = re.split(r'\s+and\s+|,|&|\+|\n', cleaned_text, flags=re.IGNORECASE)
+            segments = [s.strip() for s in raw_splits if s.strip()]
 
-                clean_query = re.sub(r'\b\d+\s*(?:qty|quantity|pcs|pieces)\b', ' ', clean_text, flags=re.IGNORECASE).strip()
-                clean_query = re.sub(r'\b(?:qty|quantity)\s*\d+\b', ' ', clean_query, flags=re.IGNORECASE).strip()
+        items = []
+        for segment in segments:
+            clean_text = segment.strip()
+            if not clean_text:
+                continue
 
+            qty = 1
+            qty_match = re.search(r'\b(\d+)\s*(?:qty|quantity|pcs|pieces|x)?\b', clean_text, flags=re.IGNORECASE)
+            if qty_match:
+                qty = int(qty_match.group(1))
+
+            clean_query = re.sub(r'\b\d+\s*(?:qty|quantity|pcs|pieces|x)?\b', ' ', clean_text, flags=re.IGNORECASE)
+            clean_query = re.sub(r'\b(order|buy|need|want|add|please|a|an|the)\b', ' ', clean_query, flags=re.IGNORECASE)
+            clean_query = re.sub(r'\s+', ' ', clean_query).strip()
+
+            if clean_query:
                 items.append({
                     "raw_text": clean_text,
                     "quantity": qty,
-                    "query": clean_query or clean_text
+                    "query": clean_query
                 })
-        else:
+
+        if not items:
             prod, qty = self._extract_product_and_qty(text)
             items.append({
                 "raw_text": text,
